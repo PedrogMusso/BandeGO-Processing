@@ -1,0 +1,68 @@
+service: bandego
+
+plugins:
+  - serverless-offline
+
+build:
+  esbuild: false
+
+provider:
+  name: aws
+  runtime: nodejs18.x
+  region: us-east-1
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action:
+            - dynamodb:GetItem
+            - dynamodb:PutItem
+            - dynamodb:Query
+            - dynamodb:UpdateItem
+            - dynamodb:DeleteItem
+            - dynamodb:BatchGetItem
+            - dynamodb:BatchWriteItem
+          Resource:
+            - "arn:aws:dynamodb:${aws:region}:${aws:accountId}:table/${self:service}-data-table"
+            - "arn:aws:dynamodb:${aws:region}:${aws:accountId}:table/${self:service}-data-table/index/*"
+  ecr: # <-- ADICIONE ESTA SEÇÃO
+    images:
+      appimage: # <-- Um nome lógico para sua imagem
+        path: ./ # <-- Caminho para o diretório que contém o Dockerfile (raiz)
+        # platform: linux/amd64 # Descomente se precisar forçar a arquitetura
+
+functions:
+  NewImage:
+    image:
+      name: appimage
+    events:
+      - http:
+          path: /newImage
+          method: post
+    environment:
+      DATA_TABLE: ${self:service}-data-table
+
+resources:
+  Resources:
+    DataTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:service}-data-table
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: S
+        KeySchema:
+          - AttributeName: id
+            KeyType: HASH
+        BillingMode: PAY_PER_REQUEST
+
+    ImageBucket:
+      Type: AWS::S3::Bucket
+      Properties:
+        BucketName: ${self:service}-image-bucket
+
+package:
+  individually: true
+  patterns:
+    - '!node_modules/'
+    - '!layer/'

@@ -1,0 +1,39 @@
+{
+  "name": "bandego-processing",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "tsc": "tsc --noEmit",
+    "deploy": "serverless deploy",
+    "build": "esbuild src/*/.ts --bundle --platform=node --target=node18 --format=esm --outdir=dist --external:@tensorflow/tfjs-node --external:aws-sdk", 
+    "deploy:full": "npm run build:esbuild && npm run deploy"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/PedrogMusso/BandeGO-Processing.git"
+  },
+  "type": "module",
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/PedrogMusso/BandeGO-Processing/issues"
+  },
+  "homepage": "https://github.com/PedrogMusso/BandeGO-Processing#readme",
+  "devDependencies": {
+    "@serverless/typescript": "^4.11.1",
+    "@types/aws-lambda": "^8.10.149",
+    "@types/node": "^20.17.48",
+    "esbuild": "^0.25.5",
+    "serverless": "^4.14.1",
+    "serverless-esbuild": "^1.55.0",
+    "serverless-offline": "^14.4.0",
+    "ts-jest": "^29.3.2",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.8.3"
+  },
+  "dependencies": {
+    "@tensorflow-models/coco-ssd": "^2.2.3"
+  }
+}
