@@ -1,0 +1,4 @@
+ultralytics
+Pillow
+numpy
+aws-lambda-powertools  # Opcional, mas recomendado para boas práticas (logging, tracing, metrics)
