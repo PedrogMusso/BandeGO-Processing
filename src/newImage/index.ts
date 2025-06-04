@@ -1,33 +1,6 @@
-import type * as TF from '@tensorflow/tfjs-node';
-import type * as COCOSSD from '@tensorflow-models/coco-ssd';
-
-const tf: typeof TF = require('@tensorflow/tfjs-node');
-const cocoSsd: typeof COCOSSD = require('@tensorflow-models/coco-ssd');
-
-let modelPromise: Promise<COCOSSD.ObjectDetection> | null = null;
-
-const loadModel = async (): Promise<COCOSSD.ObjectDetection> => {
-  if (!modelPromise) {
-    console.log("Loading COCO-SSD model...");
-
-    modelPromise = cocoSsd.load();
-  }
-  try {
-    const model = await modelPromise;
-    console.log("COCO-SSD model loaded successfully.");
-    return model;
-  } catch (error) {
-    console.error("Failed to load COCO-SSD model:", error);
-
-    modelPromise = null;
-
-    throw error;
-  }
-};
-
-loadModel().catch(err => {
-  console.error("Error during initial model load:", err);
-});
+import { ProcessImage } from '../utils/openAI';
+import { CountTable } from "../models/countTable";
+import { v4 as uuidv4 } from 'uuid';
 
 interface LambdaEvent {
   body: { image: string }
@@ -35,82 +8,37 @@ interface LambdaEvent {
 
 interface LambdaResponse {
   statusCode: number;
-  headers?: { [key: string]: string };
-  body: string;
+  body: {
+    message: string;
+    count: string;
+  };
 }
 
 exports.handler = async (event: LambdaEvent): Promise<LambdaResponse> => {
-  try {
-    console.log("Handler invoked. Event body (raw):", event.body);
+  const { image } = event.body;
 
-    const { image } = event.body;
+  const count = await ProcessImage(image);
 
-    if (!image) {
-      console.log("Missing image in request body.");
-      return { statusCode: 400, body: JSON.stringify({ error: 'Missing image' }) };
-    }
+  console.log('Contagem: ', count[0])
 
-    const imageBuffer = Buffer.from(image, 'base64');
-    console.log(`Received image buffer, length: ${imageBuffer.length}`);
+  const createdAt = new Date().toISOString();
 
-    const imageTensor = tf.node.decodeImage(imageBuffer, 3, 'int32', false) as TF.Tensor3D;
-    console.log("Image decoded into tensor. Shape:", imageTensor.shape);
+  console.log('Data gerada com sucesso', createdAt);
 
-    const model = await loadModel();
+  await CountTable.batchPut([{
+    id: uuidv4(),
+    countPeople: parseInt(count[0]),
+    createdAt: createdAt,
+    allRecordsKey: 'ALL_RECORDS',
+  }]);
 
-    console.log("Detecting objects...");
+  console.log('Sucesso em salvar no DynamoDB');
 
-    // Antes
-    // const predictions: COCOSSD.DetectedObject[] = await model.detect(imageTensor);
-
-    // Depois (Exemplo com novos parâmetros)
-    const predictions: COCOSSD.DetectedObject[] = await model.detect(
-      imageTensor,
-      200,
-      0.5
-    );
-
-    console.log(`Detection complete. Found ${predictions.length} objects (before filtering for person).`); // Log para ver total de detecções
-        console.log('predictions', predictions);
-
-    tf.dispose(imageTensor);
-    console.log("Image tensor disposed.");
-
-
-    const people = predictions.filter((p: COCOSSD.DetectedObject) => p.class === 'person');
-    console.log(`Found ${people.length} people.`);
-
-    return {
-      statusCode: 200,
-      headers: {
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*',
-      },
-      body: JSON.stringify({
-        peopleCount: people.length,
-        people: people.map((p: COCOSSD.DetectedObject) => ({
-          bbox: p.bbox,
-          score: p.score,
-        })),
-        processedAt: new Date().toISOString(),
-      }),
-    };
-  } catch (error: any) {
-    console.error('Error processing request:', error.message);
-    console.error('Stack trace:', error.stack);
-    if (error.message.includes("model")) {
-      modelPromise = null;
-    }
-    return {
-      statusCode: 500,
-      body: JSON.stringify({
-        message: 'Erro ao processar a requisicao',
-        error: error.message,
-      }),
-      headers: {
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*',
-      },
-    };
-  }
+  return {
+    statusCode: 200,
+    body: {
+      message: 'Sucesso em contar as pessoas',
+      count: count[0],
+    },
+  };
 };

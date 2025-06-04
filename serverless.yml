@@ -2,6 +2,7 @@ service: bandego
 
 plugins:
   - serverless-offline
+  - serverless-iam-roles-per-function
 
 provider:
   name: aws
@@ -15,37 +16,69 @@ provider:
           Resource:
             - "arn:aws:dynamodb:${aws:region}:${aws:accountId}:table/${self:service}-data-table"
             - "arn:aws:dynamodb:${aws:region}:${aws:accountId}:table/${self:service}-data-table/index/*"
-  ecr:
-    images:
-      appimage:
-        path: ./
-        # platform: linux/amd64 # Se precisar especificar a arquitetura
 
 functions:
   NewImage:
-    image:
-      name: appimage
+    handler: dist/newImage/index.handler
     events:
       - http:
           path: /newImage
           method: post
     environment:
-      DATA_TABLE: ${self:service}-data-table
+      COUNT_TABLE: CountTable
+    iamRoleStatementsName: bandego-NewImage-lambdaRole
+    iamRoleStatements:
+      - Effect: Allow
+        Action: dynamodb:*
+        Resource:
+          - '*'
+
+  GetCount:
+    handler: dist/getCount/index.handler
+    events:
+      - http:
+          path: /getCount
+          method: get
+    environment:
+      COUNT_TABLE: CountTable
+    iamRoleStatementsName: bandego-GetCount-lambdaRole
+    iamRoleStatements:
+      - Effect: Allow
+        Action: dynamodb:*
+        Resource:
+          - '*'
 
 resources:
   Resources:
-    DataTable:
+    CountTable:
       Type: AWS::DynamoDB::Table
-      # ...
-    ImageBucket:
-      Type: AWS::S3::Bucket
-      # ...
+      Properties:
+        TableName: CountTable
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: S
+          - AttributeName: createdAt
+            AttributeType: S
+          - AttributeName: allRecordsKey
+            AttributeType: S
+        KeySchema:
+          - AttributeName: id
+            KeyType: HASH
+        GlobalSecondaryIndexes:
+          - IndexName: CreatedAtIndex
+            KeySchema:
+              - AttributeName: allRecordsKey
+                KeyType: HASH
+              - AttributeName: createdAt
+                KeyType: RANGE
+            Projection:
+              ProjectionType: ALL
+        BillingMode: PAY_PER_REQUEST
+    # ImageBucket:
+    #   Type: AWS::S3::Bucket
+    #   # ...
 
 package:
   individually: true
   patterns:
     - '!node_modules/**'
-    - '!.venv/**'
-    - '!__pycache__/**'
-    - '!.pytest_cache/**'
-    - '!layer/**'
