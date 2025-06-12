@@ -12,6 +12,10 @@ interface LambdaResponse {
     message: string;
     count: string;
   };
+  headers: {
+    "Content-Type": string;
+    "Access-Control-Allow-Origin": string;
+  };
 }
 
 exports.handler = async (event: LambdaEvent): Promise<LambdaResponse> => {
@@ -39,6 +43,10 @@ exports.handler = async (event: LambdaEvent): Promise<LambdaResponse> => {
     body: {
       message: 'Sucesso em contar as pessoas',
       count: count[0],
+    },
+    headers: {
+      "Content-Type": "application/json",
+      "Access-Control-Allow-Origin": "*"
     },
   };
 };

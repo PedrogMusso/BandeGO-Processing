@@ -1,8 +1,11 @@
 import OpenAI from 'openai'
-
-const openai = new OpenAI({ apiKey: '' });
+import { getSecretFromSSM } from './ssm';
 
 export async function ProcessImage(image: string) {
+    const openAiKey = await getSecretFromSSM('openAiKey');
+
+    const openai = new OpenAI({ apiKey: openAiKey });
+
     const base64WithPrefix = `data:image/png;base64,${image}`;
 
     try {

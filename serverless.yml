@@ -24,6 +24,7 @@ functions:
       - http:
           path: /newImage
           method: post
+          cors: true
     environment:
       COUNT_TABLE: CountTable
     iamRoleStatementsName: bandego-NewImage-lambdaRole
@@ -32,6 +33,10 @@ functions:
         Action: dynamodb:*
         Resource:
           - '*'
+      - Effect: Allow
+        Action: ssm:GetParameter
+        Resource:
+          - 'arn:aws:ssm:${aws:region}:${aws:accountId}:parameter/openAiKey'
 
   GetCount:
     handler: dist/getCount/index.handler
@@ -39,6 +44,7 @@ functions:
       - http:
           path: /getCount
           method: get
+          cors: true
     environment:
       COUNT_TABLE: CountTable
     iamRoleStatementsName: bandego-GetCount-lambdaRole

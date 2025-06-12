@@ -14,12 +14,6 @@ const countSchema = new dynamoose.Schema(
         createdAt: {
             type: String,
             required: true,
-            index: {
-                name: 'CreatedAtIndex',
-                project: true,
-                type: "global",
-                rangeKey: 'createdAt',
-            },
         },
         allRecordsKey: {
             type: String,
@@ -28,6 +22,7 @@ const countSchema = new dynamoose.Schema(
                 name: 'CreatedAtIndex',
                 project: true,
                 type: 'global',
+                rangeKey: 'createdAt',
             },
         },
     },

@@ -9,6 +9,10 @@ interface LambdaResponse {
         message: string;
         error: unknown;
     };
+    headers: {
+        "Content-Type": string;
+        "Access-Control-Allow-Origin": string;
+    };
 }
 
 exports.handler = async (): Promise<LambdaResponse> => {
@@ -27,20 +31,28 @@ exports.handler = async (): Promise<LambdaResponse> => {
                 body: {
                     message: 'Nenhum item encontrado',
                     error: 'NotFound',
-                }
+                },
+                headers: {
+                    "Content-Type": "application/json",
+                    "Access-Control-Allow-Origin": "*"
+                },
             };
         }
 
-        const mostRecent = JSON.stringify(result[0]);
+        const mostRecentCount = result[0].toJSON();
 
-        console.log('MostRecent', mostRecent);
+        console.log('Result received', mostRecentCount);
 
         return {
             statusCode: 200,
             body: {
                 message: "Sucesso em pegar a contagem",
-                count: mostRecent,
-            }
+                count: mostRecentCount.countPeople,
+            },
+            headers: {
+                "Content-Type": "application/json",
+                "Access-Control-Allow-Origin": "*"
+            },
         };
     } catch (error) {
         console.error("Erro ao buscar o item mais recente:", error);
@@ -49,7 +61,11 @@ exports.handler = async (): Promise<LambdaResponse> => {
             body: {
                 message: "Erro ao buscar item mais recente",
                 error,
-            }
+            },
+            headers: {
+                "Content-Type": "application/json",
+                "Access-Control-Allow-Origin": "*"
+            },
         }
     }
 }
