@@ -16,7 +16,20 @@ interface LambdaResponse {
 }
 
 exports.handler = async (event: LambdaEvent): Promise<LambdaResponse> => {
-  const { image } = event.body;
+    const parsedBody = typeof event.body === "string" ? JSON.parse(event.body) : event.body;
+    const image = parsedBody?.image;
+
+    if (!image) {
+        console.error("Imagem não encontrada no body");
+        return {
+            statusCode: 400,
+            body: JSON.stringify({ error: "Imagem não encontrada no body" }),
+            headers: {
+                "Content-Type": "application/json",
+                "Access-Control-Allow-Origin": "*"
+            }
+        };
+    }
 
   const count = await ProcessImage(image);
 
