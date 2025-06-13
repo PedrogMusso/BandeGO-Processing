@@ -2,13 +2,7 @@ import { CountTable } from "../models/countTable";
 
 interface LambdaResponse {
     statusCode: number;
-    body: {
-        message: string;
-        count: string;
-    } | {
-        message: string;
-        error: unknown;
-    };
+    body: string;
     headers: {
         "Content-Type": string;
         "Access-Control-Allow-Origin": string;
@@ -28,10 +22,10 @@ exports.handler = async (): Promise<LambdaResponse> => {
             console.log('Nenhum item encontrado.');
             return {
                 statusCode: 404,
-                body: {
+                body: JSON.stringify({
                     message: 'Nenhum item encontrado',
                     error: 'NotFound',
-                },
+                }),
                 headers: {
                     "Content-Type": "application/json",
                     "Access-Control-Allow-Origin": "*"
@@ -45,10 +39,10 @@ exports.handler = async (): Promise<LambdaResponse> => {
 
         return {
             statusCode: 200,
-            body: {
+            body: JSON.stringify({
                 message: "Sucesso em pegar a contagem",
                 count: mostRecentCount.countPeople,
-            },
+            }),
             headers: {
                 "Content-Type": "application/json",
                 "Access-Control-Allow-Origin": "*"
@@ -58,10 +52,10 @@ exports.handler = async (): Promise<LambdaResponse> => {
         console.error("Erro ao buscar o item mais recente:", error);
         return {
             statusCode: 500,
-            body: {
+            body: JSON.stringify({
                 message: "Erro ao buscar item mais recente",
                 error,
-            },
+            }),
             headers: {
                 "Content-Type": "application/json",
                 "Access-Control-Allow-Origin": "*"

@@ -49,3 +49,52 @@ export async function ProcessImage(image: string) {
         return [];
     }
 }
+
+export async function ExplainImage(image: string) {
+    const openAiKey = await getSecretFromSSM('openAiKey');
+
+    const openai = new OpenAI({ apiKey: openAiKey });
+
+    const base64WithPrefix = `data:image/png;base64,${image}`;
+
+    try {
+        const completion = await openai.chat.completions.create({
+            model: 'gpt-4o',
+            messages: [
+                { role: 'system', content: 'You are an assistant that receives a base64 image and explains what you see in the picture. Your response must be in portuguese.' },
+                {
+                    role: 'user',
+                    content: [
+                        {
+                            type: 'text',
+                            text: 'Explain in portuguese what you understand about this image',
+                        },
+                        {
+                            type: 'image_url',
+                            image_url: {
+                                url: base64WithPrefix,
+                            },
+                        },
+                    ],
+                },
+            ],
+            max_completion_tokens: 1000,
+            temperature: 0.7,
+        });
+
+        const content = completion.choices[0].message.content;
+
+        if (content) {
+            return [content.trim()];
+        } else {
+            return [];
+        }
+    } catch (error) {
+        if (error instanceof Error) {
+            console.error('Error', error);
+        } else {
+            console.error('Erro desconhecido');
+        }
+        return [];
+    }
+}
