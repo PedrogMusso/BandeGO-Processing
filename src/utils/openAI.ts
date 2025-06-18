@@ -15,14 +15,14 @@ export async function ProcessImage(image: string) {
         {
           role: "system",
           content:
-            "You are an assistant that receives a base64 image and counts people in it. You only answer with the number of people, nothing else",
+            "You are an assistant that receives a base64 image and counts people in it. You only answer with the number of people, nothing else. If you can't determinate how many people there are in the image, just answers 0.",
         },
         {
           role: "user",
           content: [
             {
               type: "text",
-              text: "Count the number of people in this image.If you don't see any people, return 0",
+              text: "Count the number of people in this image. If you don't see any people, return 0. If you can't determinate how many people there are in the image, just answers 0.",
             },
             {
               type: "image_url",

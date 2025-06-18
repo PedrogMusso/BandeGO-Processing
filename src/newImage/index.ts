@@ -18,7 +18,7 @@ interface LambdaResponse {
 exports.handler = async (event: LambdaEvent): Promise<LambdaResponse> => {
     const parsedBody = typeof event.body === "string" ? JSON.parse(event.body) : event.body;
     const image = parsedBody?.image;
-
+    console.log('Imagem em Base64', image);
     if (!image) {
         console.error("Imagem não encontrada no body");
         return {
